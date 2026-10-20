@@ -1,0 +1,131 @@
+DEFENSA ORAL - COMPETENCIA 05
+Duración estimada: 4 a 6 minutos, incluyendo una demostración breve.
+Si son tres integrantes, pueden repartir los tres bloques.
+Si son dos, pueden dividir después de la explicación de MaterialPropertyBlock.
+
+BLOQUE 1 - OBJETIVO, SHADER Y MATERIALES
+
+Nuestro proyecto es una arena de enemigos que sirve para comparar distintas
+formas de representar estados visuales. Cada enemigo puede estar normal,
+en alerta o dañado. Para distinguirlos usamos verde, amarillo y rojo.
+
+Primero hicimos un enemigo simple con un cubo y un shader en HLSL. El código
+de C# decide qué estado tiene cada enemigo. El shader recibe el color en
+la propiedad _ColorEstado, transforma los vértices y calcula el color final
+de los píxeles. También oscurece algunas caras según su orientación, para
+que se vea el volumen. No usamos texturas, sombras ni luces en tiempo real.
+
+[Mostrar la escena con 1.000 enemigos y señalar los tres colores.]
+
+La comparación tiene cuatro versiones. Todas dibujan los mismos cubos en
+las mismas posiciones. El estado depende del índice de cada enemigo, así
+que no cambia al pasar de una versión a otra. La cámara también queda fija.
+
+En la versión A cada enemigo tiene un material propio. Partimos del material
+base y accedemos a renderer.material para obtener una copia para ese objeto.
+Así podemos cambiar su color sin modificar los demás. La desventaja es que
+aumenta la cantidad de materiales. Esas copias se destruyen al eliminar el grupo.
+
+La diferencia con sharedMaterial es que sharedMaterial devuelve la referencia
+compartida. Si cambiamos directamente el color de ese material, el cambio
+afecta a todos los objetos que lo usan. Por eso hay que distinguir entre
+cambiar una referencia y crear un material nuevo.
+
+BLOQUE 2 - REUTILIZACIÓN Y MEDICIÓN
+
+En la versión B todos los enemigos usan un material base. Para darles colores
+distintos usamos MaterialPropertyBlock. El bloque guarda propiedades por
+Renderer y permite variar el color sin hacer una copia del material.
+
+Pero eso no garantiza que vaya a ser más rápido. En nuestra configuración
+de URP, usar esos bloques impide que los Renderer sigan la ruta de SRP Batcher.
+Además, el material base de B no tiene instancing automático. Por eso evaluamos
+esta configuración concreta, sin decir que cualquier uso de bloques es igual.
+
+En la versión D compartimos tres materiales: uno normal, uno de alerta y otro
+dañado. Cada enemigo recibe la referencia que corresponde a su estado.
+Es una alternativa sencilla cuando hay pocos estados definidos. Los Renderer
+pueden usar SRP Batcher porque el shader tiene sus propiedades en UnityPerMaterial.
+
+SRP Batcher reduce el trabajo de preparación de las llamadas en CPU. Eso no
+significa que mil objetos pasen automáticamente a dibujarse en una sola llamada.
+
+Para comprobar las diferencias probamos 100, 500 y 1.000 enemigos. Hicimos tres
+capturas de cinco segundos por combinación, con tres segundos de calentamiento.
+El orden de las versiones rota en cada repetición. Medimos en una build de
+Windows, sin VSync y sin límite de FPS, y ocultamos la interfaz durante la toma.
+
+Registramos CPU total, CPU activa del hilo principal, CPU activa del hilo de
+render, GPU, memoria, draw calls y SetPass. CPU total incluye esperas, por eso
+no la confundimos con trabajo activo. También guardamos el hardware y la
+resolución. La captura automática renderiza a una textura sin ventana. En ese modo no hubo
+muestras válidas de GPU ni un hilo de render separado: ambos figuran como N/D.
+El trabajo de render está incluido en el hilo principal.
+
+BLOQUE 3 - INSTANCING, RESULTADOS Y AUDITORÍA
+
+La versión C usa GPU Instancing de forma explícita. Separamos las matrices
+en tres grupos según el estado y dibujamos cada grupo con el mismo material.
+La GPU reutiliza la malla para dibujar muchas copias.
+
+Esta versión no crea un GameObject por enemigo. Eso también influye en CPU
+y memoria. Es una solución para esta prueba de dibujo; para un juego con
+colisiones y comportamientos individuales habría que agregar otros sistemas.
+
+[Mostrar la tabla de Entrega/Resultados.txt.]
+
+Con mil enemigos, el tiempo medio del hilo principal fue aproximadamente
+0,80 milisegundos en A, 2,16 en B, 0,31 en C y 0,67 en D.
+A, B y D registraron mil llamadas de dibujo; C registró tres.
+B también registró mil SetPass. Esto muestra que tener un solo material
+no garantiza menos llamadas ni menos trabajo de CPU.
+
+No elegimos una estrategia solo por tener menos materiales o más FPS.
+Revisamos tiempos por frame y llamadas de dibujo, y conservamos los registros
+del Profiler para que los resultados se puedan comprobar.
+
+La auditoría cruzada todavía debe completarla el otro equipo.
+Una mejora que pueden comprobar es reemplazar B por D cuando solo hacen falta
+tres estados. Deben repetir la comparación y entregar sus propias evidencias.
+
+La elección depende de lo que necesite el juego. Si hay pocos estados definidos,
+compartir materiales es sencillo. Si necesitamos propiedades particulares por
+enemigo, los bloques dan flexibilidad, pero hay que revisar su costo. Para dibujar
+muchos objetos repetidos, el instancing merece probarse.
+
+Lo que podemos afirmar es lo que respaldan nuestras mediciones en esta escena
+y esta computadora. Si cambiamos el shader, el hardware o la lógica de enemigos,
+tenemos que volver a medir.
+
+PREGUNTAS PARA PRACTICAR
+
+¿Qué hace C# y qué hace el shader?
+C# elige el estado y organiza los objetos o matrices. El shader transforma
+los vértices y calcula el aspecto de los píxeles.
+
+¿Por qué renderer.material puede consumir más memoria?
+Porque puede crear una copia del material compartido para ese Renderer.
+
+¿Por qué tres materiales no significan tres draw calls?
+Las llamadas también dependen del pipeline, la malla, los pases y el batching.
+
+¿MPB siempre mejora el rendimiento?
+No. Evita copias de materiales, pero puede afectar SRP Batcher. Hay que medir.
+
+¿C es una comparación idéntica en todo?
+La apariencia es equivalente. La estructura cambia porque C usa matrices,
+sin un GameObject por enemigo. Por eso explicamos ese compromiso.
+
+¿CPU y GPU se suman para obtener el tiempo de frame?
+No de forma directa, porque trabajan de manera solapada y puede haber esperas.
+
+¿Qué pasa si no se puede medir GPU?
+Se registra N/D, se explica por qué y se usan otras evidencias. No se inventa un valor.
+
+¿Qué tiene que hacer el equipo auditor?
+Ejecutar, medir, sugerir al menos una mejora y comprobarla con datos propios.
+
+ANTES DE EXPONER
+Leer Resultados.txt y practicar la demostración.
+La parte de auditoría se debe reemplazar por el informe real cuando lo reciban.
+No afirmar que otro equipo verificó el proyecto antes de que lo haya hecho.

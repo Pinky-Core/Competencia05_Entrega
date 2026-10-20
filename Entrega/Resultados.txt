@@ -1,0 +1,102 @@
+COMPETENCIA 05 - RESULTADOS
+
+Medicion real en Windows, Unity 6000.4.0f1 y URP 17.4.0.
+CPU: AMD Ryzen 7 250. GPU: Radeon 780M. RAM: 32 GB.
+Resolución: 1280x720. Calidad: Very Low. SRP Batcher activo.
+Build de desarrollo, Direct3D11, sin VSync y sin límite de FPS.
+Renderizado a textura mediante --sinventana y -batchmode.
+Tres capturas de cinco segundos por combinación, con tres segundos de calentamiento.
+
+Los valores de la tabla son medias de las tres capturas, con igual peso por captura.
+CPU main incluye el trabajo de render en el modo usado, sin un hilo de render separado.
+CPU total incluye esperas. GPU y CPU render: N/D en las 36 capturas.
+FrameTimingManager no entregó muestras GPU válidas sin presentar frames a una ventana.
+No se interpreta N/D como 0 ms ni se afirma una mejora de GPU.
+
+Versión  Enemigos  CPU total ms  CPU main ms  Draw calls  SetPass  Unity MB  Materiales KiB
+A             100         0.321        0.318         100        1     71.18           92.58
+B             100         0.448        0.446         100      100     82.16            1.93
+C             100         0.299        0.297           3        3     81.94            5.62
+D             100         0.310        0.308         100        1     82.19            5.62
+A             500         0.522        0.519         500        2     84.82          462.89
+B             500         1.256        1.253         500      500     84.23            1.93
+C             500         0.294        0.292           3        3     83.19            5.62
+D             500         0.481        0.479         500        2     84.02            5.62
+A            1000         0.801        0.798        1000        4     88.48          925.78
+B            1000         2.163        2.161        1000     1000     87.26            1.93
+C            1000         0.314        0.312           3        3     84.81            5.62
+D            1000         0.677        0.675        1000        4     86.58            5.62
+
+A: material individual. B: MaterialPropertyBlock.
+C: GPU Instancing explícito. D: tres materiales compartidos.
+Materiales KiB es la suma del tamaño nativo informado por Unity para los materiales
+usados por los enemigos. No incluye el tamaño de toda la escena ni todos los assets cargados.
+
+CPU MAIN: RANGO ENTRE LAS TRES CAPTURAS
+A / 100: 0.3134 a 0.3215 ms.
+B / 100: 0.4388 a 0.4578 ms.
+C / 100: 0.2812 a 0.3174 ms.
+D / 100: 0.2994 a 0.3185 ms.
+A / 500: 0.5156 a 0.5259 ms.
+B / 500: 1.2451 a 1.2664 ms.
+C / 500: 0.2906 a 0.2942 ms.
+D / 500: 0.4746 a 0.4863 ms.
+A / 1000: 0.7636 a 0.8178 ms.
+B / 1000: 2.1048 a 2.2145 ms.
+C / 1000: 0.3064 a 0.3216 ms.
+D / 1000: 0.6741 a 0.6756 ms.
+
+INTERPRETACIÓN
+
+A usa 100, 500 o 1.000 materiales propios. Su memoria nativa de materiales escala
+de 92,58 a 925,78 KiB. B usa un material base de 1,93 KiB y C/D tres, de 5,62 KiB.
+
+Los contadores muestran que A y D usan llamadas de SRP Batcher.
+B usa llamadas Standard. C usa llamadas Standard Instanced.
+A, B y D mantienen una llamada por enemigo en esta escena.
+C tiene tres llamadas: una por estado.
+
+B reduce materiales respecto de A, pero registra 100, 500 o 1.000 SetPass.
+A y D registran 1, 2 y 4 SetPass. C registra 3.
+El ahorro de materiales de B no se tradujo en menos llamadas ni en menos CPU.
+
+Con 1.000 enemigos, la media de CPU main fue:
+A: 0,798 ms. B: 2,161 ms. C: 0,312 ms. D: 0,675 ms.
+C tuvo el menor valor en las tres repeticiones de ese tamaño.
+Con 100 enemigos, los rangos de C y D se superponen; no se presenta esa pequeña
+diferencia como una mejora concluyente.
+
+C cambia la estructura de la escena: dibuja matrices sin crear un GameObject
+por enemigo. Su ventaja incluye ese cambio. Esta prueba no incorpora física,
+IA de enemigos ni animación, y no permite afirmar que C sea mejor en cualquier juego.
+
+La columna Unity MB incluye memoria de Unity, recolectores, cachés y Profiler.
+La primera captura A/100 ocurrió antes de inicializar las grabaciones binarias
+y muestra menos memoria global. Ese dato no demuestra que A ahorre memoria.
+Para evaluar materiales se usa su tamaño nativo; para comparar memoria completa,
+conviene repetir cada versión en un proceso nuevo con idéntica instrumentación.
+
+Recomendación para esta arena:
+C resulta útil para dibujar muchos cubos repetidos con tres estados.
+D es una alternativa simple si se necesitan GameObjects y estados discretos.
+B requiere valorar la flexibilidad por Renderer frente al costo observado.
+
+EVIDENCIA
+
+Carpeta: Entrega/Evidencias/Medicion_20261009_111755.
+resultados.csv conserva las 36 capturas, duración, muestras, medias y percentiles.
+equipo.txt registra hardware, cámara y configuración.
+Las doce imágenes PNG son idénticas entre versiones para cada cantidad.
+Se contaron exactamente 100, 500 y 1.000 cubos visibles en las imágenes.
+Los doce archivos .raw fueron abiertos correctamente con el Profiler de Unity:
+372 frames válidos en total. frames_profiler.csv conserva los datos extraídos.
+Comparativa.png representa las medias del CSV.
+Grabaciones_profiler.png representa los contadores de frames centrales de los .raw;
+es un gráfico exportado de sus datos, no una captura de la ventana de Unity.
+LEEME.txt explica cómo abrir los .raw y obtener capturas de Profiler/Frame Debugger.
+
+AUDITORÍA CRUZADA
+
+Pendiente del otro equipo. Auditoria_otro_equipo.txt es la ficha para completarla.
+La propuesta de reemplazar B por D para tres estados cuenta con esta comparación
+interna, pero el equipo auditor debe repetirla y adjuntar sus propias mediciones.

@@ -1,0 +1,64 @@
+COMPETENCIA 05 - LA ARENA DE LOS 1.000 ENEMIGOS
+
+Para probar:
+1. Abrir el proyecto con Unity 6000.6.0f1 (version actual del proyecto).
+2. Abrir Assets/Scenes/Arena.unity y presionar Play.
+3. Elegir A, B, C o D y 100, 500 o 1.000 enemigos.
+4. Hacer clic dentro de la pestaña Game para que reciba el teclado.
+5. Presionar Espacio (o el boton Cambiar estado) para pasar cada enemigo al
+   siguiente estado: normal > alerta > dañado > normal. Cada uno parte de i % 3;
+   por eso siempre hay tres colores y las franjas cambian de color al presionar.
+6. Verde es normal, amarillo es alerta y rojo es dañado.
+7. En Game, activar Stats para ver FPS, tiempo de frame y batches. Para un
+   analisis detallado, abrir Window > Analysis > Profiler antes de probar.
+
+SampleScene es la escena vacia de la plantilla; las pruebas estan en Arena.
+Espacio cambia los estados sin volver a crear los enemigos y conserva la
+estrategia de materiales de A, B, C y D. No se optimizaron las cuatro versiones.
+Durante Medir todas se bloquea el cambio manual para no alterar las muestras.
+Las mediciones automaticas siguen usando los estados iniciales i % 3; no miden
+el costo de presionar Espacio. Para estudiar ese cambio, usar el Profiler.
+
+También se puede ejecutar Build/Arena.exe.
+
+Para medir:
+Presionar "Medir todas". Se oculta la interfaz mientras se toman las muestras.
+Se recorren las 12 combinaciones, con 3 repeticiones de 5 segundos y 3 segundos
+de calentamiento antes de cada muestra. El recorrido tarda aproximadamente 5 minutos.
+La carpeta de salida aparece al terminar y también se escribe en el log.
+
+Desde PowerShell, parado en la carpeta del proyecto:
+.\Build\Arena.exe -batchmode --sinventana --medir -force-d3d11 --salida "$PWD\Entrega\Evidencias"
+
+Ese comando mide el renderizado a una textura de 1280x720, sin presentar una ventana.
+CPU render y GPU pueden figurar N/D en ese modo. Para medir el juego con ventana,
+usar el boton Medir todas con la build abierta y visible.
+
+Se guardan resultados.csv, equipo.txt, imágenes de las escenas y grabaciones .raw.
+Los .raw requieren una Development Build, como la build incluida.
+Para generar otra: menú Competencia > Crear build Windows.
+Para regenerar los assets y la escena: Competencia > Preparar escena.
+
+Para revisar la evidencia en Unity:
+Window > Analysis > Profiler > Load y seleccionar una grabación .raw.
+Elegir un frame completo y mirar CPU Usage, Rendering y Memory.
+Los .raw se registran después de la tabla, no durante sus mediciones.
+Las imágenes PNG muestran la escena, no son capturas de la ventana Profiler.
+
+Para comprobar el batching:
+Abrir Arena, presionar Play y elegir la versión.
+Window > Analysis > Frame Debugger, Enable.
+Revisar el pase Estados, las llamadas instanciadas de C y la compatibilidad de A/D
+con SRP Batcher. Guardar una captura de esa ventana para cada versión con 1.000.
+Desactivar Frame Debugger antes de medir tiempos.
+
+Archivos para entregar:
+- Este proyecto de Unity y Build/Arena.exe con sus carpetas de datos.
+- Entrega/Ficha_tecnica.txt.
+- Entrega/Evidencias con las mediciones y sus registros.
+- Entrega/Resultados.txt, con la comparación de las mediciones.
+- Entrega/Auditoria_otro_equipo.txt, completado por el otro equipo.
+- Entrega/Defensa_oral.txt, para preparar la exposición.
+
+El trabajo de auditoría debe hacerlo otro equipo. La plantilla no reemplaza su informe.
+El PDF indica equipos de 2 o 3 estudiantes y defensa de 4 a 6 minutos.

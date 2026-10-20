@@ -1,0 +1,136 @@
+COMPETENCIA 05 - FICHA TÉCNICA
+
+Implementación
+Proyecto actual: Unity 6000.6.0f1 y Universal Render Pipeline 17.6.0.
+Las evidencias historicas conservan la version usada al generarlas.
+La escena Arena usa un renderer Forward para mallas 3D.
+El prefab Enemigo es un cubo sin collider. Todas las versiones usan esa misma malla.
+No hay animaciones, físicas, sombras, texturas ni luces en tiempo real.
+
+Shader
+Assets/Shaders/EstadosEnemigo.shader está escrito en HLSL.
+_ColorEstado determina el color: verde, amarillo o rojo.
+C# decide el estado. El shader transforma los vértices y calcula el color de cada píxel.
+Se usa un sombreado sencillo según la normal de la cara y una dirección fija.
+Ese sombreado ayuda a distinguir el volumen del cubo; no simula iluminación completa.
+Se mantiene el mismo shader y el mismo pase en las cuatro alternativas.
+No se usan keywords diferentes para los estados.
+
+_ColorEstado está en UnityPerMaterial para permitir SRP Batcher.
+#pragma multi_compile_instancing y UNITY_SETUP_INSTANCE_ID habilitan las
+transformaciones por instancia. En C cada estado tiene un material uniforme;
+no se envía un color diferente por instancia dentro del mismo lote.
+
+Estados
+El índice i determina posición y estado. La posición es una grilla de 40 columnas,
+con separación de 2,5 unidades. El estado inicial es i % 3. Espacio avanza cada enemigo al siguiente estado;
+tras tres pulsaciones se recupera la distribucion inicial.
+Para 100 objetos hay 34 normales, 33 en alerta y 33 dañados.
+Para 500 hay 167 normales, 167 en alerta y 166 dañados.
+Para 1.000 hay 334 normales, 333 en alerta y 333 dañados.
+La cámara permanece fija y muestra la grilla completa de 1.000 en todas las pruebas.
+
+Versiones
+A - Material individual.
+Cada Renderer recibe el material base compartido y accede a renderer.material.
+Ese acceso crea la copia propia cuando el material estaba compartido.
+Se cambia _ColorEstado en esa copia y se destruye al eliminar el grupo.
+Hay un material por enemigo. No se llama a renderer.material cada frame.
+
+B - MaterialPropertyBlock.
+Todos usan un material base. C# reutiliza un bloque para asignar _ColorEstado.
+SetPropertyBlock copia los valores al Renderer; reutilizar el objeto C# es válido.
+Esta propiedad es uniforme de material, no una propiedad instanciada.
+El material base tiene instancing desactivado. B evalúa MPB sin instancing automático.
+Los bloques sacan esos Renderer de la ruta compatible con SRP Batcher en URP.
+B no representa todas las configuraciones posibles de MPB.
+
+C - GPU Instancing explícito.
+C# arma tres arrays de matrices, uno por estado, y llama a Graphics.RenderMeshInstanced.
+Se usan tres materiales con instancing habilitado y lotes de hasta 500.
+El límite elegido cabe en el caso habitual de 511 instancias con ambas matrices.
+Con los tamaños de esta competencia, cada estado entra en una sola llamada.
+No se instancian GameObjects de enemigos: se dibuja la misma malla con sus matrices.
+La apariencia y la cantidad dibujada son equivalentes, pero la estructura de CPU cambia.
+Esa diferencia forma parte de la estrategia y se debe mencionar al interpretar memoria.
+Esta implementación no incluye comportamientos individuales, colisiones ni movimiento.
+
+D - Materiales compartidos.
+Cada enemigo recibe uno de tres materiales mediante sharedMaterial.
+No se modifica el color de un material compartido después de asignarlo, porque
+ese cambio afectaría a todos los enemigos que lo usan.
+Se conservan GameObjects y Renderer. SRP Batcher está habilitado.
+Los materiales permiten instancing, pero el camino automático de MeshRenderer
+prioriza SRP Batcher cuando es compatible. C utiliza una API explícita.
+
+material y sharedMaterial
+Renderer.material obtiene un material propio y puede provocar una copia nativa.
+Renderer.sharedMaterial devuelve el material compartido.
+Modificar ese material cambia todos los Renderer que lo referencian y, en el Editor,
+puede cambiar el asset del proyecto.
+MaterialPropertyBlock permite cambiar propiedades por Renderer sin clonar materiales.
+Ahorrar materiales no implica automáticamente reducir draw calls.
+
+Medición
+Se comparan 100, 500 y 1.000 enemigos, tres veces por versión.
+Antes de cada captura se cambia el grupo, se espera su destrucción, se solicita GC
+y se dejan tres segundos de calentamiento. La captura dura cinco segundos.
+El orden rota por repetición: ABCD, BCDA y CDAB.
+Se mide en Development Build, con VSync desactivado y sin límite de FPS.
+La interfaz está oculta durante la toma.
+La build registra hardware, resolución, cámara, calidad, Unity y pipeline en equipo.txt.
+
+FrameTimingManager entrega CPU total por frame, CPU activa del hilo principal,
+CPU activa del hilo de render y GPU por frame. Se descartan timestamps repetidos.
+CPU total incluye esperas y no equivale al trabajo activo de CPU.
+La tabla conserva el número de muestras válidas. GPU no disponible se escribe N/D.
+ProfilerRecorder registra draw calls, SetPass y bytes de GC por frame.
+Unity 6.4 separa las llamadas en ocho categorías. Se suman para obtener el total,
+y se conservan Standard, SRP Batcher e Instanced también por separado.
+Profiler.GetTotalAllocatedMemoryLong registra la memoria total asignada por Unity.
+No es memoria exclusiva de materiales ni la memoria total del proceso.
+Se registra también el tamaño nativo informado para los materiales de los enemigos.
+Las medias y el percentil 95 se calculan por captura. No se concluye solo a partir de FPS.
+
+Evidencia y límites
+Las grabaciones binarias del Profiler se toman durante 30 frames después de medir.
+Las PNG permiten verificar que posiciones y colores sean equivalentes.
+Frame Debugger sirve para confirmar el tipo de llamadas y por qué se separan lotes.
+Una captura con Frame Debugger activado no se usa para medir CPU o GPU.
+La build de desarrollo, el recolector de datos y otros programas abiertos agregan costo.
+Los resultados describen esta escena y esta computadora. No son una garantía universal.
+
+Hipótesis
+A debería aumentar la memoria dedicada a materiales frente a B y D.
+Se comprueba con materiales_enemigos y memoria_materiales_bytes.
+C debería reducir llamadas de dibujo para enemigos idénticos agrupados por estado.
+Se comprueba con draw_calls y con las llamadas instanciadas en Frame Debugger.
+B puede aumentar el trabajo de render frente a D al impedir la ruta SRP Batcher.
+Se comprueba con CPU render y CPU main; no se da por confirmada sin los datos.
+
+Cuándo elegir
+Para objetos repetidos que comparten malla y material, el instancing puede ser útil.
+Para muchos Renderer compatibles con URP, SRP Batcher reduce costo de preparación
+de dibujo aunque las llamadas de dibujo no necesariamente se agrupen en una sola.
+MPB da flexibilidad por objeto, pero hay que verificar el shader, sus propiedades
+y los efectos sobre SRP Batcher e instancing en la configuración concreta.
+Si se necesitan enemigos con lógica propia, C necesita datos y sistemas adicionales.
+
+Fuentes oficiales consultadas
+https://docs.unity3d.com/6000.4/Documentation/ScriptReference/Renderer-material.html
+https://docs.unity3d.com/6000.4/Documentation/ScriptReference/Renderer-sharedMaterial.html
+https://docs.unity3d.com/6000.4/Documentation/ScriptReference/MaterialPropertyBlock.html
+https://docs.unity3d.com/6000.4/Documentation/ScriptReference/Graphics.RenderMeshInstanced.html
+https://docs.unity3d.com/6000.4/Documentation/Manual/SRPBatcher.html
+https://docs.unity3d.com/6000.4/Documentation/ScriptReference/FrameTimingManager.html
+https://docs.unity.com/en-us/engine/6000.3/manual/analysis/graphics-performance-profiling/profile-rendering/frame-timing-manager/counter-reference
+https://docs.unity.com/en-us/engine/7000.0/manual/analysis/graphics-performance-profiling/profile-rendering/profiler-rendering
+
+Modo de captura sin ventana
+El argumento --sinventana usa una textura de 1280x720 y SubmitRenderRequest.
+Es una solicitud de renderizado explícita por frame con la misma cámara y el mismo URP.
+En -batchmode Unity usa un hilo gráfico sin un hilo de render separado.
+Sin presentar frames a una ventana, FrameTimingManager no entrega tiempos GPU válidos.
+CPU render y GPU se registran N/D; el trabajo de render queda incluido en CPU main.
+Estas condiciones se conservan en todas las versiones del recorrido automático.
+La build también funciona con ventana y permite repetir las mediciones en ese modo.

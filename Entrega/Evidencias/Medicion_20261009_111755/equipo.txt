@@ -1,0 +1,31 @@
+﻿Unity: 6000.4.0f1
+Pipeline: PipelineArena (UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset)
+Sistema: Windows 11  (10.0.26200)
+CPU: AMD Ryzen 7 250 w/ Radeon 780M Graphics 
+Nucleos logicos: 16
+RAM MB: 32010
+GPU: AMD Radeon 780M Graphics
+VRAM MB: 16005
+API grafica: Direct3D11
+Resolucion: 1280x720
+Calidad: Very Low
+VSync: 0
+Limite FPS: -1
+SRP Batcher: True
+Development build: True
+Editor: False
+Render a textura sin ventana: True
+Camara posicion: (48.75, 72.00, -40.00)
+Camara rotacion: (45.81, 0.00, 0.00)
+Camara ortografica: 32
+Calentamiento segundos: 3
+Captura segundos: 5
+Repeticiones: 3
+Orden: ABCD, BCDA, CDAB por cantidad.
+Estados: i % 3 (normal, alerta, danado).
+CPU frame incluye esperas. CPU main y render representan trabajo activo segun FrameTimingManager.
+N/D significa que la plataforma no entrego muestras validas. No equivale a cero.
+Draw calls: suma de las ocho categorias de llamadas de Unity 6.4; se conservan Standard, SRP e Instanced por separado.
+Memoria: total asignado por Unity, no memoria exclusiva de materiales ni memoria del proceso.
+La grabacion binaria de 30 frames y las imagenes se toman despues de medir.
+Durante la medicion se oculta la interfaz. Sin animaciones, colisiones ni sombras.

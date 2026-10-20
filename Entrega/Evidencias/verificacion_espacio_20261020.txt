@@ -1,0 +1,23 @@
+Verificacion funcional - 20/10/2026
+Unity 6000.6.0f1 / URP 17.6.0
+Prueba en Play Mode con teclado virtual del Input System.
+Se verificaron colores, cantidad de enemigos y estrategia de materiales.
+C: capturas diferentes en los pasos 0, 1 y 2; paso 3 identico al 0.
+No se realizaron optimizaciones ni se regeneraron las mediciones historicas.
+
+VERIFICADO: version 0, 100 enemigos, tres pulsaciones de Espacio y ciclo completo.
+VERIFICADO: version 1, 100 enemigos, tres pulsaciones de Espacio y ciclo completo.
+VERIFICADO: version 2, 100 enemigos, tres pulsaciones de Espacio y ciclo completo.
+VERIFICADO: version 3, 100 enemigos, tres pulsaciones de Espacio y ciclo completo.
+VERIFICADO: version 0, 500 enemigos, tres pulsaciones de Espacio y ciclo completo.
+VERIFICADO: version 1, 500 enemigos, tres pulsaciones de Espacio y ciclo completo.
+VERIFICADO: version 2, 500 enemigos, tres pulsaciones de Espacio y ciclo completo.
+VERIFICADO: version 3, 500 enemigos, tres pulsaciones de Espacio y ciclo completo.
+VERIFICADO: version 0, 1000 enemigos, tres pulsaciones de Espacio y ciclo completo.
+VERIFICADO: version 1, 1000 enemigos, tres pulsaciones de Espacio y ciclo completo.
+VERIFICADO: version 2, 1000 enemigos, tres pulsaciones de Espacio y ciclo completo.
+VERIFICADO: version 3, 1000 enemigos, tres pulsaciones de Espacio y ciclo completo.
+VERIFICACION COMPLETA OK
+
+Build Windows Development: Result Success.
+Build/Arena.exe actualizado; arranque con Direct3D 11 sin errores de ejecucion en el log.

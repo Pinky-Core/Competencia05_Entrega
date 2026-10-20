@@ -1,0 +1,58 @@
+COMPETENCIA 05 - INFORME DEL EQUIPO AUDITOR
+
+Pendiente de completar por el equipo que recibe el proyecto.
+
+Equipo desarrollador:
+Integrantes:
+
+Equipo auditor:
+Integrantes:
+Fecha:
+Versión del proyecto recibida:
+
+1. Reproducción
+Versión de Unity:
+Pipeline:
+CPU, GPU y RAM:
+Resolución y calidad:
+Cámara:
+Build o Editor:
+Duración, calentamiento y repeticiones:
+Carpeta con CSV y capturas:
+
+2. Comprobaciones
+¿A, B, C y D dibujan la misma cantidad con iguales posiciones y estados?
+¿Se ven normal, alerta y dañado?
+¿El shader usado en los cuatro casos es el mismo?
+¿Qué parte resuelve C# y qué parte resuelve el shader?
+¿B pierde la compatibilidad con SRP Batcher?
+¿C aparece como llamadas instanciadas en Frame Debugger?
+¿Se conservaron las condiciones durante las capturas?
+
+3. Mediciones
+Adjuntar tabla y capturas propias. Registrar CPU y GPU por separado.
+Si GPU no está disponible, explicar la limitación.
+Identificar cuántas muestras respaldan cada promedio.
+
+4. Mejora sugerida
+Debe incluir al menos una mejora.
+
+Problema observado:
+Cambio propuesto:
+Hipótesis:
+Métrica que debería cambiar:
+Datos antes del cambio:
+Datos después del cambio:
+Evidencia adjunta:
+¿Se confirmó la mejora?:
+Compromisos visuales o de lógica:
+Condiciones donde la recomendación es válida:
+
+5. Recomendación
+Estrategia recomendada y motivo:
+Casos donde se elegiría otra estrategia:
+
+Una posibilidad para investigar es comparar D con B para estados discretos.
+Otra es subdividir los lotes de C si la arena crece y parte queda fuera de cámara:
+RenderMeshInstanced realiza el culling del lote completo.
+Estas son propuestas de experimentación; requieren mediciones del equipo auditor.
